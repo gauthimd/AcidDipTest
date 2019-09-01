@@ -17,13 +17,21 @@ class AcidDipTester():
       self.sonicpin = 25
       self.pwrsplypin = 12
       self.sparepin = 16
+      self.button = 17
+      self.limit1 = 27
+      self.limit2 = 22
       self.relaypins = [23,25,12,16]
       self.motorpins = [6,13,19,26]
+      self.inputpins = [17,27,22]
       GPIO.setwarnings(False)
       GPIO.setmode(GPIO.BCM)
       for x in self.relaypins:
-        GPIO.setup(x, GPIO.OUT)
-        GPIO.output(x, GPIO.HIGH)
+          GPIO.setup(x, GPIO.OUT)
+          GPIO.output(x, GPIO.HIGH)
+      for x in self.inputpins:
+          GPIO.setup(x, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+      GPIO.add_event_detect(27, GPIO.FALLING, callback=self.limit1callback, bouncetime=300)
+      GPIO.add_event_detect(22, GPIO.FALLING, callback=self.limit2callback, bouncetime=300)
   
   def displayReady(self):
       lcd.lcd_clear()
@@ -62,10 +70,18 @@ class AcidDipTester():
       
   def pwrsplyOff(self):
       GPIO.output(self.pwrsplypin, GPIO.HIGH)
+  
+  def buttoncallback(self, channel):
+      print("Button pressed")
+  
+  def limit1callback(self, channel):
+      print("Limit1 reached")
+
+  def limit2callback(self, channel):
+      print("Limit2 reached")
 
   def run(self):
-      time.sleep(1)
-      self.displayReady()
+      time.sleep(2)
       self.linactOn()
       time.sleep(1)
       self.linactOff()
@@ -78,8 +94,12 @@ class AcidDipTester():
       self.pwrsplyOn()
       time.sleep(1)
       self.pwrsplyOff()
+      self.displayReady()
+      GPIO.wait_for_edge(17, GPIO.FALLING)
+      print("17 grounded")
       lcd.lcd_clear()
       GPIO.cleanup()
+      print("Done")
 
 if __name__=="__main__":
     acid = AcidDipTester()
