@@ -14,3 +14,5 @@ class AcidDipTester():
     lcd.lcd_display_string("    Booting....",3)
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
+
+if __name__ = "
