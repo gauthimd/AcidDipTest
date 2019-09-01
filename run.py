@@ -22,6 +22,27 @@ class AcidDipTester():
     for x in self.pins:
       GPIO.setup(x, GPIO.OUT)
       GPIO.output(x, GPIO.HIGH)
+  
+  def linactOn(self):
+      GPIO.output(self.linactpin, GPIO.LOW)
+
+  def linactOff(self):
+      GPIO.output(self.linactpin, GPIO.HIGH)
+
+  def sonicOn(self):
+      GPIO.output(self.sonicpin, GPIO.LOW)
+
+  def sonicOff(self):
+      GPIO.output(self.sonicpin, GPIO.HIGH)
+
+  def pwrsplyOn(self):
+      GPIO.output(self.pwrsplypin, GPIO.LOW)
+      
+  def pwrsplyOff(self):
+      GPIO.output(self.pwrsplypin, GPIO.HIGH)
 
 if __name__=="__main__":
     acid = AcidDipTester()
+    acid.linactOn()
+    time.sleep(1)
+
