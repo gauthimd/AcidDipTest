@@ -60,7 +60,8 @@ class AcidDipTester():
       lcd.lcd_display_string("    Booting....",3)
 
   def displayHoming(self):
-      lcd.lcd_clear()
+     #lcd.lcd_clear()
+      lcd.lcd_backlight("Off") #changepoint
       time.sleep(.1)
       lcd.lcd_display_string("       Homing",1)
       lcd.lcd_display_string("   Please wait...",3)
@@ -94,8 +95,8 @@ class AcidDipTester():
       print("Limit2 reached")
 
   def limitTest(self):
+      print("Waiting for limit")
       while True:
-          print("Waiting for limit")
           time.sleep(.33)
           if self.limit1 == 1:
               self.limit1 = 0
