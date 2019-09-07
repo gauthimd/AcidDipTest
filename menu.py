@@ -7,6 +7,7 @@ import RPi.GPIO as GPIO
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(17,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
 lcd = lcddriver.lcd()
 rot = KY040.KY040(21,20,24)
@@ -26,7 +27,6 @@ class menu():
         for x in self.stringdict:
             self.stringdict[x] = "Hello"
         self.lcd.lcd_clear()
-        y = 1
         z = 0
         while True:
             if self.blinkon == 1:
