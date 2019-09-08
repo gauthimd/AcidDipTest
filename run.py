@@ -15,24 +15,27 @@ stepper = RpiMotorLib.BYJMotor("Stepper", "Nema")
 class AcidDipTester():
   
   def __init__(self):
-      self.displayBooting()      #Boot screen
-      self.linactpin = 23        #Relay pins
+      self.linactpin = 18        #Relay pins
       self.sonicpin = 25
       self.pwrsplypin = 12
       self.lightpin = 16
       self.buttonpin = 17        #Button and switch inputs
       self.limitpin = 27
-      self.doorpin = 22
-      self.relaypins = [23,25,12,16]  #Relay pin list
+      self.doorpin1 = 22
+      self.doorpin2 = 4
+      self.relaypins = [18,25,12,16]  #Relay pin list
       self.motorpins = [6,13,19,26]   #Motor pin list
-      self.inputpins = [17,27,22]     #Input pin list
+      self.inputpins = [17,27,22,4]     #Input pin list
       self.switch = 0   #Switch and button variables, 1 or 0, used by callbacks
       self.button = 0
       self.limit = 0
       self.door = 0
-      self.menuon = 0
+      self.mainmenu = 0 # These bits keep track of which menu and line are selected
+      self.sonicmenu = 0
+      self.sonictime = 30
       self.menuline = 1
-      self.blinkline = 1
+      self.position = None
+      self.auto = 0
       self.rotaryswitch = KY040.KY040(21,20,24,self.rotaryCallback,self.switchCallback) 
       GPIO.setwarnings(False)   #GPIO setup
       GPIO.setmode(GPIO.BCM)
@@ -44,18 +47,26 @@ class AcidDipTester():
       #Set callbacks for limit switch detection
       GPIO.add_event_detect(27, GPIO.FALLING, callback=self.limitcallback, bouncetime=300)
       GPIO.add_event_detect(22, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
+      GPIO.add_event_detect(4, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
       self.rotaryswitch.start()
   
   #Callback functions are called when input is received.
   def rotaryCallback(self, rot):
-      if self.menuon == 1:
+      if self.mainmenu == 1:
           if rot == 0:
               self.menuline +=1
               if self.menuline > 7: self.menuline = 1
           else:
               self.menuline -=1
               if self.menuline < 1: self.menuline = 7
-      print(self.menuline)
+      if self.sonicmenu == 1:
+          if rot == 0:
+              self.sonictime +=1
+              if self.sonictime >= 30: self.sonictime = 30
+          else:
+              self.sonictime -=1
+              if self.sonictime <= 0: self.sonictime = 0
+      print(self.menuline, self.sonictime)
 
   def switchCallback(self):
       self.switch = 1
@@ -73,34 +84,6 @@ class AcidDipTester():
       self.door = 1
       print("Door Ajar")
 
-  #Display screens
-  def displayReady(self):
-      lcd.lcd_clear()
-      time.sleep(.1)
-      lcd.lcd_display_string("        Ready",1)
-      lcd.lcd_display_string("    Press Button",3)
-      lcd.lcd_display_string("      to Begin",4)
-
-  def displayBooting(self):
-      lcd.lcd_clear()
-      time.sleep(.1)
-      lcd.lcd_display_string("      PENA QC",1)
-      lcd.lcd_display_string("   Acid Dip Test",2)
-      lcd.lcd_display_string("    Booting....",3)
-
-  def displayHoming(self):
-      lcd.lcd_clear()
-      time.sleep(.1)
-      lcd.lcd_display_string("       Homing",1)
-      lcd.lcd_display_string("   Please wait...",3)
-
-  def displayDoor(self):
-      lcd.lcd_clear()
-      time.sleep(.1)
-      lcd.lcd_display_string("     Door Ajar",2)
-      lcd.lcd_display_string("Close Door to Resume",4)
-      
-      
   #Define easy to use functions for turning the relays on/off
   def lightOn(self):
       GPIO.output(self.lightpin, GPIO.LOW)
@@ -109,6 +92,7 @@ class AcidDipTester():
       GPIO.output(self.lightpin, GPIO.HIGH)
 
   def linactOn(self):
+      print("linactOn")
       GPIO.output(self.linactpin, GPIO.LOW)
 
   def linactOff(self):
@@ -146,17 +130,22 @@ class AcidDipTester():
   
   #This will be my Homing function
   def homing(self):
-      self.displayHoming()
+      lcd.lcd_clear()
+      time.sleep(.1)
       self.limit = 0  
-      while True:
+      while GPIO.input(self.limitpin) == True:
+          lcd.lcd_display_string("       Homing",1)
+          lcd.lcd_display_string("   Please wait...",3)
           time.sleep(.33)
-          if self.limit == 1:
-              self.limit = 0
-              break
-          else: continue
+          if self.door == 1: self.doorAjar()
+      self.position = 3
   
   def ready(self):
-      self.displayReady()
+      lcd.lcd_clear()
+      time.sleep(.1)
+      lcd.lcd_display_string("        Ready",1)
+      lcd.lcd_display_string("    Press Button",3)
+      lcd.lcd_display_string("      to Begin",4)
       t1 = self.blinkOn()
       while True:
           if self.button == 1:
@@ -176,64 +165,169 @@ class AcidDipTester():
               break
           time.sleep(.33)
       if x == 1: 
-          return self.run()
+          self.autoRun()
       elif x == 2: 
-          return self.menu()
+          self.menu()
       elif x == 3: 
-          return self.doorAjar()
+          self.doorAjar()
+          self.ready()
 
   def doorAjar(self):
-      self.displayDoor()
-      #while door is still open, do nothing
+      lcd.lcd_clear()
+      time.sleep(.1)
+      lcd.lcd_display_string("     Door Ajar",2)
+      lcd.lcd_display_string("Close Door to Resume",4)
+      while GPIO.input(self.doorpin1) == False or GPIO.input(self.doorpin2) == False:
+          time.sleep(.5)
+      self.door = 0
+      lcd.lcd_clear()
 
   def boot(self):
-      self.displayBooting()
+      lcd.lcd_clear()
+      time.sleep(.1)
+      lcd.lcd_display_string("      PENA QC",1)
+      lcd.lcd_display_string("   Acid Dip Test",2)
+      lcd.lcd_display_string("    Booting....",3)
       time.sleep(2)
       self.homing()
       self.ready()
   
   def menu(self):
       print("menu")
-      self.menuon = 1
-      menu = {1:"Set Sonication Time",2:"Extend actuator",3:"Turn On Power Supply",
-              4:"Turn On Sonicator",5:"Move to Station 1",6:"Move to Station 2",
-              7:"Exit"}
-      z = 0 
+      lcd.lcd_clear()
+      self.mainmenu = 1
+      if self.position == 1:
+          menu = {1:"Set Sonication Time",2:" Move to Station 2",3:"Return to Home Pos.",4:"  Extend Actuator",
+                  5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+      if self.position == 2:
+          menu = {1:"Set Sonication Time",2:" Move to Station 1",3:"Return to Home Pos.",4:"  Extend Actuator",
+                  5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+      if self.position == 3:
+          menu = {1:"Set Sonication Time",2:" Move to Station 1",3:" Move to Station 2",4:"  Extend Actuator",
+                  5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+          z = 0
+          while self.switch == 0:
+              if z == 0:
+                  lcd.lcd_display_string("        Menu",1)
+                  lcd.lcd_display_string(menu[self.menuline],2)
+                  lcd.lcd_display_string("Press knob to select",4)
+                  time.sleep(.33)
+                  z = 1
+              else:
+                  lcd.lcd_display_string("                    ",2)
+                  time.sleep(.33)
+                  z = 0
+              if self.door == 1: self.doorAjar()
+          if self.menuline == 1: 
+              self.switch = 0
+              self.mainmenu = 0
+              self.setSonictime()
+          elif self.menuline == 2: 
+              self.switch = 0
+              self.mainmenu = 0
+              self.movetoStation()
+          elif self.menuline == 3: 
+              self.switch = 0
+              self.mainmenu = 0
+              if self.position == 3: self.movetoStation()
+              else: self.homing()
+          elif self.menuline == 4 or self.menuline == 5 or self.menuline == 6: 
+              self.switch = 0
+              self.mainmenu = 0
+              self.manualEnable()
+          elif self.menuline == 7: 
+              self.switch = 0
+              self.mainmenu = 0
+              self.ready()
+          self.mainmenu = 0
+
+  def setSonictime(self):
+      self.sonicmenu = 1
+      lcd.lcd_clear()
       while self.switch == 0:
-          if self.menuline <= 4:
-              for x in range(1,5):
-                  if x == self.menuline:
-                      if z == 1:
-                          lcd.lcd_display_string(menu[x],x)
-                          z = 0
-                      elif z == 0:
-                          lcd.lcd_display_string("",x)
-                          z = 1
-                  else: 
-                      lcd.lcd_display_string(menu[x],x)
-              time.sleep(.5)
-              lcd.lcd_clear()
-          else:
-              for x in range(5,8):
-                  if x == self.menuline:
-                      if z == 1:
-                          lcd.lcd_display_string(menu[x],x-4)
-                          lcd.lcd_display_string("",4)
-                          z = 0
-                      elif z == 0:
-                          lcd.lcd_display_string("",x-4)
-                          lcd.lcd_display_string("",4)
-                          z = 1
-                  else: 
-                      lcd.lcd_display_string(menu[x],x-4)
-                      lcd.lcd_display_string("",4)
-              time.sleep(.5)
-              lcd.lcd_clear()
-      if self.menuline == 7: 
-          self.switch = 0
-          self.menuon = 0
-          self.ready()
-      self.menuon = 0
+          lcd.lcd_display_string("Set Sonication Time:",1)
+          lcd.lcd_display_string("         "+str(self.sonictime).zfill(2),2)
+          lcd.lcd_display_string("  Use Knob to Set",3)
+          lcd.lcd_display_string(" Press Knob to Save",4)
+          time.sleep(.5)
+          if self.door == 1: self.doorAjar()
+      lcd.lcd_clear()
+      lcd.lcd_display_string("  Sonication Time",1)
+      lcd.lcd_display_string("         "+str(self.sonictime),2)
+      lcd.lcd_display_string("       Saved",3)
+      lcd.lcd_display_string("                    ",4)
+      time.sleep(2)
+      self.switch = 0
+      self.sonicmenu =0
+      self.menu()
+
+  def movetoStation(self,num):
+      x = 1
+      if self.pos = 1:
+          if self.menuline = 2: x = 2
+      if self.pos = 2:
+          if self.menuline =2: x = 1
+      if self.pos = 3:
+          if self.menuline =2: x = 1
+          else: x = 2   
+      x = str(x)
+      self.lightOn()
+      print("Moving to Station "+x)
+      lcd.lcd_clear()
+      lcd.lcd_display_string("Moving to Station "+x,2) 
+      lcd.lcd_display_string("   Please Wait...",3) 
+      x = 0
+      while x < 5:
+          lcd.lcd_display_string("Moving to Station "+x,2) 
+          lcd.lcd_display_string("   Please Wait...",3) 
+          time.sleep(.5)
+          x += 0.5
+          if self.door == 1: 
+              self.lightOff()
+              self.doorAjar()
+              self.lightOn()
+      self.position = int(x)
+      self.lightOff()
+      self.menu()
+
+  def manualEnable(self):
+      x = 0
+      if self.menuline == 4: self.linactOn()
+      elif self.menuline == 5: self.pwrsplyOn()
+      elif self.menuline == 6: self.sonicOn()
+      self.lightOn()
+      lcd.lcd_clear()
+      while self.switch == 0:
+          if self.menuline == 4:  lcd.lcd_display_string(" Actuator Extended",1)
+          elif self.menuline ==5: lcd.lcd_display_string("  Power Supply On",1) 
+          elif self.menuline ==6: lcd.lcd_display_string("    Sonicator On",1) 
+          lcd.lcd_display_string("     Press Knob",3) 
+          if self.menuline == 4:  lcd.lcd_display_string("     to Retract",4) 
+          else:                   lcd.lcd_display_string("    to Turn Off",4) 
+          if self.door == 1:
+              x = 1
+              break
+          time.sleep(.5)
+      if self.menuline == 4: self.linactOff()
+      elif self.menuline == 5: self.pwrsplyOff()
+      elif self.menuline == 6: self.sonicOff()
+      self.lightOff()
+      if x == 1:
+          lcd.lcd_clear()
+          lcd.lcd_display_string("    Door Opened",2) 
+          if self.menuline ==4 :  lcd.lcd_display_string("   Retracting...",3) 
+          else:                   lcd.lcd_display_string("   Turning Off...",3) 
+          time.sleep(2)
+      self.switch = 0
+      self.menu()
+
+  def autoRun(self):
+      self.auto = 1
+      print("Running")
+      time.sleep(5)
+      print("Complete!")
+      time.sleep(2)
+      self.ready()
 
 if __name__== "__main__":
     acid = AcidDipTester()

@@ -7,10 +7,14 @@ import RPi.GPIO as GPIO
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(17,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+GPIO.setup(22,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
-while GPIO.input(17) == True:
+while GPIO.input(22) == True:
     print("waiting...is the hardest part")
+    time.sleep(.2)
+
+while GPIO.input(22) == False:
+    print("Still false")
     time.sleep(.2)
 
 print("Exit")
