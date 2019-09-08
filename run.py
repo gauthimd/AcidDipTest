@@ -45,6 +45,7 @@ class AcidDipTester():
       for x in self.inputpins:  #Set pull up resistors on input pins. Switches pull pin low
           GPIO.setup(x, GPIO.IN, pull_up_down=GPIO.PUD_UP)
       #Set callbacks for limit switch detection
+      GPIO.add_event_detect(17, GPIO.FALLING, callback=self.buttoncallback, bouncetime=300)
       GPIO.add_event_detect(27, GPIO.FALLING, callback=self.limitcallback, bouncetime=300)
       GPIO.add_event_detect(22, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
       GPIO.add_event_detect(4, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
@@ -55,10 +56,16 @@ class AcidDipTester():
       if self.mainmenu == 1:
           if rot == 0:
               self.menuline +=1
-              if self.menuline > 7: self.menuline = 1
+              if self.position == 3:
+                  if self.menuline > 7: self.menuline = 1
+              else:
+                  if self.menuline > 6: self.menuline = 1
           else:
               self.menuline -=1
-              if self.menuline < 1: self.menuline = 7
+              if self.position == 3:
+                  if self.menuline < 1: self.menuline = 7
+              else:
+                  if self.menuline < 1: self.menuline = 6
       if self.sonicmenu == 1:
           if rot == 0:
               self.sonictime +=1
@@ -130,14 +137,20 @@ class AcidDipTester():
   
   #This will be my Homing function
   def homing(self):
+      self.lightOn()
       lcd.lcd_clear()
       time.sleep(.1)
       self.limit = 0  
-      while GPIO.input(self.limitpin) == True:
+      while self.limit == 0:
           lcd.lcd_display_string("       Homing",1)
           lcd.lcd_display_string("   Please wait...",3)
           time.sleep(.33)
-          if self.door == 1: self.doorAjar()
+          if self.door == 1: 
+              self.lightOff()
+              self.doorAjar()
+              self.lightOn()
+      self.lightOff()
+      self.limit = 0
       self.position = 3
   
   def ready(self):
@@ -197,49 +210,51 @@ class AcidDipTester():
       lcd.lcd_clear()
       self.mainmenu = 1
       if self.position == 1:
-          menu = {1:"Set Sonication Time",2:" Move to Station 2",3:"Return to Home Pos.",4:"  Extend Actuator",
-                  5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+          self.menudict = {1:"Set Sonication Time",2:" Move to Station 2",3:"Return to Home Pos.",4:"  Extend Actuator",
+                           5:"Turn On Power Supply",6:" Turn On Sonicator"}
       if self.position == 2:
-          menu = {1:"Set Sonication Time",2:" Move to Station 1",3:"Return to Home Pos.",4:"  Extend Actuator",
-                  5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+          self.menudict = {1:"Set Sonication Time",2:" Move to Station 1",3:"Return to Home Pos.",4:"  Extend Actuator",
+                           5:"Turn On Power Supply",6:" Turn On Sonicator"}
       if self.position == 3:
-          menu = {1:"Set Sonication Time",2:" Move to Station 1",3:" Move to Station 2",4:"  Extend Actuator",
-                  5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
-          z = 0
-          while self.switch == 0:
-              if z == 0:
-                  lcd.lcd_display_string("        Menu",1)
-                  lcd.lcd_display_string(menu[self.menuline],2)
-                  lcd.lcd_display_string("Press knob to select",4)
-                  time.sleep(.33)
-                  z = 1
-              else:
-                  lcd.lcd_display_string("                    ",2)
-                  time.sleep(.33)
-                  z = 0
-              if self.door == 1: self.doorAjar()
-          if self.menuline == 1: 
-              self.switch = 0
-              self.mainmenu = 0
-              self.setSonictime()
-          elif self.menuline == 2: 
-              self.switch = 0
-              self.mainmenu = 0
-              self.movetoStation()
-          elif self.menuline == 3: 
-              self.switch = 0
-              self.mainmenu = 0
-              if self.position == 3: self.movetoStation()
-              else: self.homing()
-          elif self.menuline == 4 or self.menuline == 5 or self.menuline == 6: 
-              self.switch = 0
-              self.mainmenu = 0
-              self.manualEnable()
-          elif self.menuline == 7: 
-              self.switch = 0
-              self.mainmenu = 0
-              self.ready()
+          self.menudict = {1:"Set Sonication Time",2:" Move to Station 1",3:" Move to Station 2",4:"  Extend Actuator",
+                           5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+      z = 0
+      while self.switch == 0:
+          if z == 0:
+              lcd.lcd_display_string("        Menu",1)
+              lcd.lcd_display_string(self.menudict[self.menuline],2)
+              lcd.lcd_display_string("Press knob to select",4)
+              time.sleep(.33)
+              z = 1
+          else:
+              lcd.lcd_display_string("                    ",2)
+              time.sleep(.33)
+              z = 0
+          if self.door == 1: self.doorAjar()
+      if self.menuline == 1: 
+          self.switch = 0
           self.mainmenu = 0
+          self.setSonictime()
+      elif self.menuline == 2: 
+          self.switch = 0
+          self.mainmenu = 0
+          self.movetoStation()
+      elif self.menuline == 3: 
+          self.switch = 0
+          self.mainmenu = 0
+          if self.position == 3: self.movetoStation()
+          else: 
+              self.homing()
+              self.menu()
+      elif self.menuline == 4 or self.menuline == 5 or self.menuline == 6: 
+          self.switch = 0
+          self.mainmenu = 0
+          self.manualEnable()
+      elif self.menuline == 7: 
+          self.switch = 0
+          self.mainmenu = 0
+          self.ready()
+      self.mainmenu = 0
 
   def setSonictime(self):
       self.sonicmenu = 1
@@ -261,14 +276,14 @@ class AcidDipTester():
       self.sonicmenu =0
       self.menu()
 
-  def movetoStation(self,num):
+  def movetoStation(self):
       x = 1
-      if self.pos = 1:
-          if self.menuline = 2: x = 2
-      if self.pos = 2:
-          if self.menuline =2: x = 1
-      if self.pos = 3:
-          if self.menuline =2: x = 1
+      if self.position == 1:
+          if self.menuline == 2: x = 2
+      if self.position == 2:
+          if self.menuline == 2: x = 1
+      if self.position == 3:
+          if self.menuline == 2: x = 1
           else: x = 2   
       x = str(x)
       self.lightOn()
@@ -276,17 +291,18 @@ class AcidDipTester():
       lcd.lcd_clear()
       lcd.lcd_display_string("Moving to Station "+x,2) 
       lcd.lcd_display_string("   Please Wait...",3) 
-      x = 0
-      while x < 5:
+      y = 0
+      while y < 5:
           lcd.lcd_display_string("Moving to Station "+x,2) 
           lcd.lcd_display_string("   Please Wait...",3) 
           time.sleep(.5)
-          x += 0.5
+          y += 0.5
           if self.door == 1: 
               self.lightOff()
               self.doorAjar()
               self.lightOn()
       self.position = int(x)
+      print(self.position)
       self.lightOff()
       self.menu()
 
