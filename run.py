@@ -18,14 +18,14 @@ class AcidDipTester():
       self.linactpin = 18        #Relay pins
       self.sonicpin = 25
       self.pwrsplypin = 12
-      self.lightpin = 16
       self.buttonpin = 17        #Button and switch inputs
       self.limitpin = 27
       self.doorpin1 = 22
       self.doorpin2 = 4
-      self.relaypins = [18,25,12,16]  #Relay pin list
+      self.relaypins = [18,25,12]  #Relay pin list
       self.motorpins = [6,13,19,26]   #Motor pin list
       self.inputpins = [17,27,22,4]     #Input pin list
+      self.lightpin = 5       #PWM output used to drive button light
       self.switch = 0   #Switch and button variables, 1 or 0, used by callbacks
       self.button = 0
       self.limit = 0
@@ -44,6 +44,9 @@ class AcidDipTester():
           GPIO.output(x, GPIO.HIGH)
       for x in self.inputpins:  #Set pull up resistors on input pins. Switches pull pin low
           GPIO.setup(x, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+      GPIO.setup(5, GPIO.OUT)
+      self.pwm = GPIO.PWM(5, 100) #Set pin 5 as pwm output to drive power MOSFET for 24V button light
+      self.pwm.start(0)
       #Set callbacks for limit switch detection
       GPIO.add_event_detect(17, GPIO.FALLING, callback=self.buttoncallback, bouncetime=300)
       GPIO.add_event_detect(27, GPIO.FALLING, callback=self.limitcallback, bouncetime=300)
@@ -93,10 +96,10 @@ class AcidDipTester():
 
   #Define easy to use functions for turning the relays on/off
   def lightOn(self):
-      GPIO.output(self.lightpin, GPIO.LOW)
+      self.pwm.ChangeDutyCycle(100)
 
   def lightOff(self):
-      GPIO.output(self.lightpin, GPIO.HIGH)
+      self.pwm.ChangeDutyCycle(0)
 
   def linactOn(self):
       print("linactOn")
@@ -130,11 +133,21 @@ class AcidDipTester():
   def blinking(self):
       th = threading.currentThread()
       while getattr(th, "do_run", True):
-          self.lightOn()
-          time.sleep(.33)
-          self.lightOff()
-          time.sleep(.33)
-  
+          for x in range(0,101,5):
+              self.pwm.ChangeDutyCycle(x)
+              time.sleep(.05)
+              if self.button == 1: 
+                  break
+              elif self.switch == 1: 
+                  break
+          for x in range(95,0,-5):
+              self.pwm.ChangeDutyCycle(x)
+              time.sleep(.05)
+              if self.button == 1: 
+                  break
+              elif self.switch == 1: 
+                  break
+
   #This will be my Homing function
   def homing(self):
       self.lightOn()
@@ -154,6 +167,8 @@ class AcidDipTester():
       self.position = 3
   
   def ready(self):
+      self.button = 0
+      self.switch = 0
       lcd.lcd_clear()
       time.sleep(.1)
       lcd.lcd_display_string("        Ready",1)
@@ -170,13 +185,15 @@ class AcidDipTester():
           elif self.switch == 1:
               self.switch = 0
               self.blinkOff(t1)
+              self.lightOff()
               x = 2
               break
           elif self.door == 1:
               self.blinkOff(t1)
+              self.lightOff()
               x = 3
               break
-          time.sleep(.33)
+          time.sleep(.03)
       if x == 1: 
           self.autoRun()
       elif x == 2: 
@@ -208,6 +225,8 @@ class AcidDipTester():
   def menu(self):
       print("menu")
       lcd.lcd_clear()
+      self.button = 0
+      self.switch = 0
       self.mainmenu = 1
       if self.position == 1:
           self.menudict = {1:"Set Sonication Time",2:" Move to Station 2",3:"Return to Home Pos.",4:"  Extend Actuator",
@@ -343,9 +362,15 @@ class AcidDipTester():
       time.sleep(5)
       print("Complete!")
       time.sleep(2)
+      self.button = 0 
+      self.auto = 0
       self.ready()
 
 if __name__== "__main__":
     acid = AcidDipTester()
-    acid.boot()
+    try:
+      acid.boot()
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        lcd.lcd_backlight("Off")
     print("Done")
