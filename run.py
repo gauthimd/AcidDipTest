@@ -18,11 +18,12 @@ class AcidDipTester():
       self.linactpin = 18        #Relay pins
       self.sonicpin = 25
       self.pwrsplypin = 12
+      self.sparepin = 16
       self.buttonpin = 17        #Button and switch inputs
       self.limitpin = 27
       self.doorpin1 = 22
       self.doorpin2 = 4
-      self.relaypins = [18,25,12]  #Relay pin list
+      self.relaypins = [18,25,12,16]  #Relay pin list
       self.motorpins = [6,13,19,26]   #Motor pin list
       self.inputpins = [17,27,22,4]     #Input pin list
       self.lightpin = 5       #PWM output used to drive button light
@@ -102,7 +103,6 @@ class AcidDipTester():
       self.pwm.ChangeDutyCycle(0)
 
   def linactOn(self):
-      print("linactOn")
       GPIO.output(self.linactpin, GPIO.LOW)
 
   def linactOff(self):
@@ -133,14 +133,14 @@ class AcidDipTester():
   def blinking(self):
       th = threading.currentThread()
       while getattr(th, "do_run", True):
-          for x in range(0,101,5):
+          for x in range(0,101,10):
               self.pwm.ChangeDutyCycle(x)
               time.sleep(.05)
               if self.button == 1: 
                   break
               elif self.switch == 1: 
                   break
-          for x in range(95,0,-5):
+          for x in range(95,0,-10):
               self.pwm.ChangeDutyCycle(x)
               time.sleep(.05)
               if self.button == 1: 
@@ -283,7 +283,7 @@ class AcidDipTester():
           lcd.lcd_display_string("         "+str(self.sonictime).zfill(2),2)
           lcd.lcd_display_string("  Use Knob to Set",3)
           lcd.lcd_display_string(" Press Knob to Save",4)
-          time.sleep(.5)
+          time.sleep(.25)
           if self.door == 1: self.doorAjar()
       lcd.lcd_clear()
       lcd.lcd_display_string("  Sonication Time",1)
@@ -367,9 +367,9 @@ class AcidDipTester():
       self.ready()
 
 if __name__== "__main__":
-    acid = AcidDipTester()
     try:
-      acid.boot()
+        acid = AcidDipTester()
+        acid.boot()
     except KeyboardInterrupt:
         GPIO.cleanup()
         lcd.lcd_backlight("Off")
