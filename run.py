@@ -15,10 +15,10 @@ stepper = RpiMotorLib.BYJMotor("Stepper", "Nema")
 class AcidDipTester():
   
   def __init__(self):
-      self.linactpin = 18        #Relay pins
+      self.linactpin1 = 18        #Relay pins
+      self.linactpin2 = 16
       self.sonicpin = 25
       self.pwrsplypin = 12
-      self.sparepin = 16
       self.buttonpin = 17        #Button and switch inputs
       self.limitpin = 27
       self.doorpin1 = 22
@@ -46,7 +46,7 @@ class AcidDipTester():
       for x in self.inputpins:  #Set pull up resistors on input pins. Switches pull pin low
           GPIO.setup(x, GPIO.IN, pull_up_down=GPIO.PUD_UP)
       GPIO.setup(5, GPIO.OUT)
-      self.pwm = GPIO.PWM(5, 100) #Set pin 5 as pwm output to drive power MOSFET for 24V button light
+      self.pwm = GPIO.PWM(5, 200) #Set pin 5 as pwm output to drive power MOSFET for 24V button light
       self.pwm.start(0)
       #Set callbacks for limit switch detection
       GPIO.add_event_detect(17, GPIO.FALLING, callback=self.buttoncallback, bouncetime=300)
@@ -103,10 +103,12 @@ class AcidDipTester():
       self.pwm.ChangeDutyCycle(0)
 
   def linactOn(self):
-      GPIO.output(self.linactpin, GPIO.LOW)
+      GPIO.output(self.linactpin1, GPIO.LOW)
+      GPIO.output(self.linactpin2, GPIO.LOW)
 
   def linactOff(self):
-      GPIO.output(self.linactpin, GPIO.HIGH)
+      GPIO.output(self.linactpin1, GPIO.HIGH)
+      GPIO.output(self.linactpin2, GPIO.HIGH)
 
   def sonicOn(self):
       GPIO.output(self.sonicpin, GPIO.LOW)
@@ -218,7 +220,7 @@ class AcidDipTester():
       lcd.lcd_display_string("      PENA QC",1)
       lcd.lcd_display_string("   Acid Dip Test",2)
       lcd.lcd_display_string("    Booting....",3)
-      time.sleep(2)
+      time.sleep(5)
       self.homing()
       self.ready()
   
@@ -359,8 +361,16 @@ class AcidDipTester():
   def autoRun(self):
       self.auto = 1
       print("Running")
-      time.sleep(5)
+      lcd.lcd_clear()
+      lcd.lcd_display_string("     Running...",2) 
+      x = 0
+      while x < 16:
+          x +=1
+          if self.door == 1: self.doorAjar()
+          time.sleep(.33)
       print("Complete!")
+      lcd.lcd_clear()
+      lcd.lcd_display_string("     Complete!",3) 
       time.sleep(2)
       self.button = 0 
       self.auto = 0
