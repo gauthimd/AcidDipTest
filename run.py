@@ -17,14 +17,18 @@ class AcidDipTester():
   def __init__(self):
       self.linactpin1 = 18        #Relay pins
       self.linactpin2 = 16
-      self.sonicpin = 25
+      self.sonicpin1 = 25
+      self.sonicpin2 = 8
       self.pwrsplypin = 12
+      self.fanpin = 7
+      self.relayspare1 = 10
+      self.relayspare2 = 9
       self.buttonpin = 17        #Button and switch inputs
       self.limitpin = 27
       self.doorpin1 = 22
       self.doorpin2 = 4
-      self.relaypins = [18,25,12,16]  #Relay pin list
-      self.motorpins = [6,13,19,26]   #Motor pin list
+      self.relaypins = [18,25,12,16,8,7,10,9]  #Relay pin list
+      self.motorpins = [6,13,19]   #Motor pin list
       self.inputpins = [17,27,22,4]     #Input pin list
       self.lightpin = 5       #PWM output used to drive button light
       self.switch = 0   #Switch and button variables, 1 or 0, used by callbacks
@@ -54,6 +58,7 @@ class AcidDipTester():
       GPIO.add_event_detect(22, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
       GPIO.add_event_detect(4, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
       self.rotaryswitch.start()
+      self.fanOn()
   
   #Callback functions are called when input is received.
   def rotaryCallback(self, rot):
@@ -61,15 +66,15 @@ class AcidDipTester():
           if rot == 0:
               self.menuline +=1
               if self.position == 3:
-                  if self.menuline > 7: self.menuline = 1
+                  if self.menuline > 8: self.menuline = 1
               else:
-                  if self.menuline > 6: self.menuline = 1
+                  if self.menuline > 7: self.menuline = 1
           else:
               self.menuline -=1
               if self.position == 3:
-                  if self.menuline < 1: self.menuline = 7
+                  if self.menuline < 1: self.menuline = 8
               else:
-                  if self.menuline < 1: self.menuline = 6
+                  if self.menuline < 1: self.menuline = 7
       if self.sonicmenu == 1:
           if rot == 0:
               self.sonictime +=1
@@ -110,17 +115,29 @@ class AcidDipTester():
       GPIO.output(self.linactpin1, GPIO.HIGH)
       GPIO.output(self.linactpin2, GPIO.HIGH)
 
-  def sonicOn(self):
-      GPIO.output(self.sonicpin, GPIO.LOW)
+  def sonic1On(self):
+      GPIO.output(self.sonicpin1, GPIO.LOW)
 
-  def sonicOff(self):
-      GPIO.output(self.sonicpin, GPIO.HIGH)
+  def sonic1Off(self):
+      GPIO.output(self.sonicpin1, GPIO.HIGH)
+
+  def sonic2On(self):
+      GPIO.output(self.sonicpin2, GPIO.LOW)
+
+  def sonic2Off(self):
+      GPIO.output(self.sonicpin2, GPIO.HIGH)
 
   def pwrsplyOn(self):
       GPIO.output(self.pwrsplypin, GPIO.LOW)
       
   def pwrsplyOff(self):
       GPIO.output(self.pwrsplypin, GPIO.HIGH)
+
+  def fanOn(self):
+      GPIO.output(self.fanpin, GPIO.LOW)
+      
+  def fanOff(self):
+      GPIO.output(self.fanpin, GPIO.HIGH)
 
   def blinkOn(self):
       t1 = threading.Thread(target=self.blinking)
@@ -232,13 +249,13 @@ class AcidDipTester():
       self.mainmenu = 1
       if self.position == 1:
           self.menudict = {1:"Set Sonication Time",2:" Move to Station 2",3:"Return to Home Pos.",4:"  Extend Actuator",
-                           5:"Turn On Power Supply",6:" Turn On Sonicator"}
+                  5:"Turn On Power Supply",6:" Turn On Sonicator 1",7:" Turn On Sonicator 2"}
       if self.position == 2:
           self.menudict = {1:"Set Sonication Time",2:" Move to Station 1",3:"Return to Home Pos.",4:"  Extend Actuator",
-                           5:"Turn On Power Supply",6:" Turn On Sonicator"}
+                           5:"Turn On Power Supply",6:" Turn On Sonicator 1",7:" Turn On Sonicator 2"}
       if self.position == 3:
           self.menudict = {1:"Set Sonication Time",2:" Move to Station 1",3:" Move to Station 2",4:"  Extend Actuator",
-                           5:"Turn On Power Supply",6:" Turn On Sonicator",7:"        Exit"}
+                           5:"Turn On Power Supply",6:" Turn On Sonicator 1",7:" Turn On Sonicator 2",8:"        Exit"}
       z = 0
       while self.switch == 0:
           if z == 0:
@@ -267,11 +284,11 @@ class AcidDipTester():
           else: 
               self.homing()
               self.menu()
-      elif self.menuline == 4 or self.menuline == 5 or self.menuline == 6: 
+      elif self.menuline == 4 or self.menuline == 5 or self.menuline == 6 or self.menuline == 7: 
           self.switch = 0
           self.mainmenu = 0
           self.manualEnable()
-      elif self.menuline == 7: 
+      elif self.menuline == 8: 
           self.switch = 0
           self.mainmenu = 0
           self.ready()
@@ -331,13 +348,15 @@ class AcidDipTester():
       x = 0
       if self.menuline == 4: self.linactOn()
       elif self.menuline == 5: self.pwrsplyOn()
-      elif self.menuline == 6: self.sonicOn()
+      elif self.menuline == 6: self.sonic1On()
+      elif self.menuline == 7: self.sonic2On()
       self.lightOn()
       lcd.lcd_clear()
       while self.switch == 0:
           if self.menuline == 4:  lcd.lcd_display_string(" Actuator Extended",1)
           elif self.menuline ==5: lcd.lcd_display_string("  Power Supply On",1) 
-          elif self.menuline ==6: lcd.lcd_display_string("    Sonicator On",1) 
+          elif self.menuline ==6: lcd.lcd_display_string("  Sonicator 1 On",1) 
+          elif self.menuline ==7: lcd.lcd_display_string("  Sonicator 2 On",1) 
           lcd.lcd_display_string("     Press Knob",3) 
           if self.menuline == 4:  lcd.lcd_display_string("     to Retract",4) 
           else:                   lcd.lcd_display_string("    to Turn Off",4) 
@@ -347,7 +366,8 @@ class AcidDipTester():
           time.sleep(.5)
       if self.menuline == 4: self.linactOff()
       elif self.menuline == 5: self.pwrsplyOff()
-      elif self.menuline == 6: self.sonicOff()
+      elif self.menuline == 6: self.sonic1Off()
+      elif self.menuline == 7: self.sonic2Off()
       self.lightOff()
       if x == 1:
           lcd.lcd_clear()
