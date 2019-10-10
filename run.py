@@ -3,14 +3,14 @@
 
 #Import all necessary objects. The lcddriver is for the lcd display
 #The RpiMotorLib is for the stepper motor, and the KY040 is for the rotary encoder
-import time, lcddriver, RpiMotorLib, KY040, threading
+import time, lcddriver, KY040, threading
 import RPi.GPIO as GPIO
 from datetime import datetime
+from motordriver import Stepper
 
 #Create objects for lcd and stepper motor
 lcd = lcddriver.lcd()
-stepper = RpiMotorLib.BYJMotor("Stepper", "Nema")
-
+step = Stepper()
 
 class AcidDipTester():
   

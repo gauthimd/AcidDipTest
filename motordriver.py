@@ -29,7 +29,7 @@ class Stepper():
         while x < steps:
             x += 1
             GPIO.output(self.steppin, GPIO.LOW)
-            time.sleep(.000001/speed)
+            time.sleep(.00001/speed)
             GPIO.output(self.steppin, GPIO.HIGH)
         end = datetime.datetime.now()
         startmin = start.minute
@@ -45,5 +45,5 @@ class Stepper():
 
 if __name__=="__main__":
     step = Stepper()
-    step.step(30,0,1)
+    step.step(100,1,1)
     GPIO.cleanup()
