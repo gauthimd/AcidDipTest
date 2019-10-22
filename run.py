@@ -7,6 +7,7 @@ import time, lcddriver, KY040, threading
 import RPi.GPIO as GPIO
 from datetime import datetime
 from motordriver import Stepper
+from serialps import powerSupply
 
 #Create objects for lcd and stepper motor
 lcd = lcddriver.lcd()
@@ -129,6 +130,7 @@ class AcidDipTester():
 
   def pwrsplyOn(self):
       GPIO.output(self.pwrsplypin, GPIO.LOW)
+      time.sleep(3)
       
   def pwrsplyOff(self):
       GPIO.output(self.pwrsplypin, GPIO.HIGH)

@@ -7,15 +7,17 @@ import serial
 class powerSupply():
 
     def __init__(self, volts=24, amps=4):
-        self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
-        self.ser.write(b"*IDN?"+b"\n")
-        x = self.ser.read(100)
-        print(x.strip())
         self.volts = bytes(str(volts))
         self.ovp = bytes(str(int(self.volts) + 1))
         self.amps = bytes(str(amps))
         self.ocp = bytes(str(int(self.amps) + .25))
         time.sleep(1)
+
+    def connect(self):
+        self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+        self.ser.write(b"*IDN?"+b"\n")
+        x = self.ser.read(100)
+        print(x.strip())
 
     def lockKeys(self):
         self.ser.write(b":SYSTem:LOCK 1"+b"\n")
@@ -84,6 +86,7 @@ class powerSupply():
 
 if __name__=="__main__":
     power = powerSupply(15,3)
+    power.connect()
     power.lockKeys()
     power.setVoltsAmps()
     power.setProtection()

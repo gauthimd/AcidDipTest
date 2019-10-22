@@ -16,21 +16,22 @@ class Stepper():
         for x in self.pinlist:
             GPIO.setup(x,GPIO.OUT)
         for x in self.pinlist:
-            GPIO.output(x,GPIO.HIGH)
+            GPIO.output(x,GPIO.LOW)
 
     def step(self, revs, rotation=0, speed=1):
-        GPIO.output(self.enpin, GPIO.LOW)
         x = 0
         steps = revs*3200
+        GPIO.output(self.enpin, GPIO.HIGH)
         if rotation == 0:
-            GPIO.output(self.dirpin, GPIO.HIGH)
-        else: GPIO.output(self.dirpin, GPIO.LOW)
+            GPIO.output(self.dirpin, GPIO.LOW)
+        else: GPIO.output(self.dirpin, GPIO.HIGH)
         start = datetime.datetime.now()
         while x < steps:
             x += 1
-            GPIO.output(self.steppin, GPIO.LOW)
-            time.sleep(.00001/speed)
             GPIO.output(self.steppin, GPIO.HIGH)
+            time.sleep(.000001/speed)
+            GPIO.output(self.steppin, GPIO.LOW)
+            time.sleep(.000001/speed)
         end = datetime.datetime.now()
         startmin = start.minute
         startsec = start.second
@@ -42,8 +43,10 @@ class Stepper():
         print(revs)
         print(seconds)
         print(revs*60/seconds)
+        GPIO.output(self.enpin, GPIO.LOW)
 
 if __name__=="__main__":
     step = Stepper()
-    step.step(100,1,1)
+    step.step(286,1,1)
     GPIO.cleanup()
+#143 steps station to station
