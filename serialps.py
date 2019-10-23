@@ -6,10 +6,10 @@ import serial
 
 class powerSupply():
 
-    def __init__(self, volts=24, amps=4):
-        self.volts = bytes(str(volts))
+    def __init__(self, volt=24, amp=4):
+        self.volts = bytes(str(volt))
         self.ovp = bytes(str(int(self.volts) + 1))
-        self.amps = bytes(str(amps))
+        self.amps = bytes(str(amp))
         self.ocp = bytes(str(int(self.amps) + .25))
         time.sleep(1)
 
