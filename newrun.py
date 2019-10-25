@@ -390,6 +390,7 @@ class AcidDipTester():
 
   def manualEnable(self):
       x = 0
+      self.door = 0
       if self.menuline == 4: self.linactOn()
       elif self.menuline == 5: self.pwrsplyOn()
       elif self.menuline == 6: self.sonic1On()
