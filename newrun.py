@@ -350,7 +350,7 @@ class AcidDipTester():
       self.sonicmenu =0
       self.menu()
 
-  def movetoStation(self):
+  def movetoStation(self): #CHECK ROTATION 0 v 1 -- CW = ?  CCW = ?
       x = 1
       z = 1
       if self.position == 1:
@@ -387,22 +387,6 @@ class AcidDipTester():
       lcd.lcd_clear()
       self.lightOff()
       self.menu()
-      '''
-      y = 0
-      while y < 5:
-          lcd.lcd_display_string("Moving to Station "+x,2) 
-          lcd.lcd_display_string("   Please Wait...",3) 
-          time.sleep(.5)
-          y += 0.5
-          if self.door == 1: 
-              self.lightOff()
-              self.doorAjar()
-              self.lightOn()
-      self.position = int(x)
-      print(self.position)
-      self.lightOff()
-      self.menu()
-      '''
 
   def manualEnable(self):
       x = 0

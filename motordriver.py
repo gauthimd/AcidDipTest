@@ -39,7 +39,7 @@ class Stepper():
         endsec = end.second
         minutes = end.minute - start.minute
         print(startmin,startsec,endmin,endsec)
-        seconds = minuetes*60 + (endsec - startsec)
+        seconds = minutes*60 + (endsec - startsec)
         print(revs)
         print(seconds)
         print(revs*60/seconds)
