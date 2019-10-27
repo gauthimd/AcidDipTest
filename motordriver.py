@@ -25,14 +25,15 @@ class Stepper():
         if rotation == 0:
             GPIO.output(self.dirpin, GPIO.LOW)
         else: GPIO.output(self.dirpin, GPIO.HIGH)
-        start = datetime.datetime.now()
+        #start = datetime.datetime.now()
         while x < steps:
             x += 1
             GPIO.output(self.steppin, GPIO.HIGH)
             time.sleep(.000001/speed)
             GPIO.output(self.steppin, GPIO.LOW)
             time.sleep(.000001/speed)
-        end = datetime.datetime.now()
+        #end = datetime.datetime.now()
+        '''
         startmin = start.minute
         startsec = start.second
         endmin = end.minute
@@ -44,9 +45,10 @@ class Stepper():
         print(seconds)
         print(revs*60/seconds)
         GPIO.output(self.enpin, GPIO.LOW)
+        '''
 
 if __name__=="__main__":
     step = Stepper()
-    step.step(90,1,1)
+    step.step(274,0,1)
     GPIO.cleanup()
 #143 steps station to station

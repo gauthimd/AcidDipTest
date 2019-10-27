@@ -7,10 +7,10 @@ import serial
 class powerSupply():
 
     def __init__(self, volt=24, amp=4):
-        self.volts = bytes(str(volt))
-        self.ovp = bytes(str(int(self.volts) + 1))
-        self.amps = bytes(str(amp))
-        self.ocp = bytes(str(int(self.amps) + .25))
+        self.volts = bytes(str(volt),'utf-8')
+        self.ovp = bytes(str(int(self.volts) + 1),'utf-8')
+        self.amps = bytes(str(amp),'utf-8')
+        self.ocp = bytes(str(int(self.amps) + .25),'utf-8')
         time.sleep(1)
 
     def connect(self):
@@ -91,8 +91,8 @@ if __name__=="__main__":
     power.setVoltsAmps()
     power.setProtection()
     power.turnOn()
-    if power.selfCheck()==1: print("It's fucked")
-    else: print("It's good")
+    #if power.selfCheck()==1: print("It's fucked")
+    #else: print("It's good")
     time.sleep(5)
     power.turnOff()
     power.unlockKeys()
