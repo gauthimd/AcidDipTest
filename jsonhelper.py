@@ -26,7 +26,7 @@ class JSON():
 
 if __name__=="__main__":
     j = JSON()
-    j.writeJSON(10,2)
+    j.writeJSON(10,3)
     sonictime,position = j.readJSON()
     print(sonictime,position)
     print(type(sonictime),type(position))
