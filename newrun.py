@@ -8,11 +8,13 @@ import RPi.GPIO as GPIO
 from datetime import datetime
 from motordriver import Stepper
 from serialps import powerSupply
+from jsonhelper import JSON
 
 #Create objects for lcd and stepper motor
 lcd = lcddriver.lcd()
 step = Stepper()
 power = powerSupply(24,3)
+j = JSON()
 
 class AcidDipTester():
   
@@ -39,7 +41,7 @@ class AcidDipTester():
       self.door = 0
       self.mainmenu = 0 # These bits keep track of which menu and line are selected
       self.sonicmenu = 0
-      self.sonictime = 30
+      self.sonictime = j.readJSON()
       self.menuline = 1
       self.position = 3 
       self.auto = 0
@@ -112,28 +114,42 @@ class AcidDipTester():
   def linactOn(self):
       GPIO.output(self.linactpin1, GPIO.LOW)
       GPIO.output(self.linactpin2, GPIO.LOW)
+      time.sleep(.5)
+      self.reset()
 
   def linactOff(self):
       GPIO.output(self.linactpin1, GPIO.HIGH)
       GPIO.output(self.linactpin2, GPIO.HIGH)
+      time.sleep(.5)
+      self.reset()
 
   def sonic1On(self):
       GPIO.output(self.sonicpin1, GPIO.LOW)
+      time.sleep(.5)
+      self.reset()
 
   def sonic1Off(self):
       GPIO.output(self.sonicpin1, GPIO.HIGH)
+      time.sleep(.5)
+      self.reset()
 
   def sonic2On(self):
       GPIO.output(self.sonicpin2, GPIO.LOW)
+      time.sleep(.5)
+      self.reset()
 
   def sonic2Off(self):
       GPIO.output(self.sonicpin2, GPIO.HIGH)
+      time.sleep(.5)
+      self.reset()
 
   def pwrsplyOn(self):
       GPIO.output(self.pwrsplypin, GPIO.LOW)
       time.sleep(3)
       power.connect()
       power.turnOn()
+      time.sleep(.5)
+      self.reset()
       
   def pwrsplyOff(self):
       power.turnOff()
@@ -141,12 +157,18 @@ class AcidDipTester():
       power.close()
       time.sleep(1)
       GPIO.output(self.pwrsplypin, GPIO.HIGH)
+      time.sleep(.5)
+      self.reset()
 
   def fanOn(self):
       GPIO.output(self.fanpin, GPIO.LOW)
+      time.sleep(.5)
+      self.reset()
       
   def fanOff(self):
       GPIO.output(self.fanpin, GPIO.HIGH)
+      time.sleep(.5)
+      self.reset()
 
   def blinkOn(self):
       t1 = threading.Thread(target=self.blinking)
@@ -226,9 +248,7 @@ class AcidDipTester():
       lcd.lcd_display_string("     Complete!",3)
   
   def ready(self):
-      self.button = 0
-      self.switch = 0
-      self.door = 0
+      self.reset()
       lcd.lcd_clear()
       time.sleep(.1)
       lcd.lcd_display_string("        Ready",1)
@@ -285,8 +305,7 @@ class AcidDipTester():
   def menu(self):
       print("menu")
       lcd.lcd_clear()
-      self.button = 0
-      self.switch = 0
+      self.reset()
       self.mainmenu = 1
       self.menudict = {}
       if self.position == 1:
@@ -346,6 +365,7 @@ class AcidDipTester():
           lcd.lcd_display_string(" Press Knob to Save",4)
           time.sleep(.25)
           if self.door == 1: self.doorAjar()
+      j.writeJSON(self.sonictime)
       lcd.lcd_clear()
       lcd.lcd_display_string("  Sonication Time",1)
       lcd.lcd_display_string("         "+str(self.sonictime),2)
@@ -353,7 +373,7 @@ class AcidDipTester():
       lcd.lcd_display_string("                    ",4)
       time.sleep(2)
       self.switch = 0
-      self.sonicmenu =0
+      self.sonicmenu = 0
       self.menu()
 
   def movetoStation(self): 
@@ -362,18 +382,18 @@ class AcidDipTester():
       if self.position == 1:
           if self.menuline == 2: 
               x = 2 #Station 1 to Station 2
-              z = 1 #143steps 0 dir
+              z = 1 #140steps 0 dir
       if self.position == 2:
           if self.menuline == 2: 
               x = 1 #Station 2 to Station 1
-              z = 2 #143steps 1 dir
+              z = 2 #140steps 1 dir
       if self.position == 3:
           if self.menuline == 2: 
               x = 1 #Station 3 to Station 1
-              z = 3 #286steps 1 dir
+              z = 3 #271steps 1 dir
           else: 
               x = 2 #Station 3 to Station 2
-              z = 4 #143steps 1 dir
+              z = 4 #131steps 1 dir
       x = str(x)
       self.lightOn()
       print("Moving to Station "+x)
@@ -395,6 +415,7 @@ class AcidDipTester():
 
   def reset(self):
       self.door = 0
+      self.limit = 0
       self.button = 0
       self.switch = 0
       print("Reset")
