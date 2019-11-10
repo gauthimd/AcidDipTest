@@ -113,13 +113,13 @@ class AcidDipTester():
   def linactOn(self):
       GPIO.output(self.linactpin1, GPIO.LOW)
       GPIO.output(self.linactpin2, GPIO.LOW)
-      time.sleep(.5)
+      time.sleep(1)
       self.reset()
 
   def linactOff(self):
       GPIO.output(self.linactpin1, GPIO.HIGH)
       GPIO.output(self.linactpin2, GPIO.HIGH)
-      time.sleep(.5)
+      time.sleep(1)
       self.reset()
 
   def sonic1On(self):
@@ -246,7 +246,7 @@ class AcidDipTester():
       self.lightOff()
       self.limit = 0
       self.position = 3
-      jsn.writeJSON(self.sonictime,self.position)
+      jsn.writeJSON(self.sonictime, self.position)
       lcd.lcd_clear()
       time.sleep(.1)
       lcd.lcd_display_string("       Homing",1)
@@ -373,7 +373,7 @@ class AcidDipTester():
           lcd.lcd_display_string(" Press Knob to Save",4)
           time.sleep(.25)
           if self.door == 1: self.doorAjar()
-      jsn.writeJSON(self.sonictime)
+      jsn.writeJSON(self.sonictime, self.position)
       lcd.lcd_clear()
       time.sleep(.1)
       lcd.lcd_display_string("  Sonication Time",1)
@@ -412,20 +412,20 @@ class AcidDipTester():
       lcd.lcd_display_string("   Please Wait...",3) 
       if z == 1: 
           self.position = int(x)
-          jsn.writeJSON(self.sonictime,self.position)
+          jsn.writeJSON(self.sonictime, self.position)
           step.step(140,0) 
       if z == 2: 
           step.step(140,1)
           self.position = int(x)
-          jsn.writeJSON(self.sonictime,self.position)
+          jsn.writeJSON(self.sonictime, self.position)
       if z == 3: 
           step.step(271,1)
           self.position = int(x)
-          jsn.writeJSON(self.sonictime,self.position)
+          jsn.writeJSON(self.sonictime, self.position)
       if z == 4: 
           step.step(131,1)
           self.position = int(x)
-          jsn.writeJSON(self.sonictime,self.position)
+          jsn.writeJSON(self.sonictime, self.position)
       print("Position " + str(self.position))
       lcd.lcd_clear()
       time.sleep(.1)
@@ -460,15 +460,10 @@ class AcidDipTester():
       if self.menuline == 4:  lcd.lcd_display_string("     to Retract",4) 
       else:                   lcd.lcd_display_string("    to Turn Off",4) 
       time.sleep(.5)
-      self.reset()
       while self.switch == 0:
           if self.door == 1:
-              time.sleep(.5)
-              if GPIO.input(self.doorpin1) == True and GPIO.input(self.doorpin2) == True:
-                  self.door = 0
-              if self.door == 1:
-                  x = 1
-                  break
+              x = 1
+              break
           time.sleep(.5)
       if self.menuline == 4: self.linactOff()
       elif self.menuline == 5: self.pwrsplyOff()
@@ -482,7 +477,6 @@ class AcidDipTester():
           if self.menuline == 4 :  lcd.lcd_display_string("   Retracting...",3) 
           else:                   lcd.lcd_display_string("   Turning Off...",3) 
           time.sleep(3)
-      self.reset()
       self.menu()
 
   def autoRun(self):
@@ -497,10 +491,10 @@ class AcidDipTester():
       lcd.lcd_display_string("Moving to Station 1",2) 
       step.step(271,1)
       self.position = 1
-      jsn.writeJSON(self.sonictime,self.position)
+      jsn.writeJSON(self.sonictime, self.position)
       lcd.lcd_clear()
       time.sleep(.1)
-      lcd.lcd_display_string"     Acid Bath",1) 
+      lcd.lcd_display_string("     Acid Bath",1) 
       self.pwrsplyOn()
       lcd.lcd_display_string("  Power Supply On",2) 
       time.sleep(1)
@@ -519,11 +513,17 @@ class AcidDipTester():
           lcd.lcd_display_string(" Actuator Extended",3) 
           lcd.lcd_display_string("    Sonicator On",4) 
           if self.door == 1: 
+              lcd.lcd_clear()
+              time.sleep(.1)
+              lcd.lcd_display_string("     Door Ajar",2)
+              lcd.lcd_display_string("    Aborting...",3)
+              self.pwrsplyOff()
+              self.linactOff()
+              self.sonic1Off()
               self.doorAjar()
               self.pwrsplyOn()
               self.linactOn()
               self.sonic1On()
-              self.reset()
           x -= 1
           time.sleep(1)
       lcd.lcd_clear()
@@ -540,7 +540,7 @@ class AcidDipTester():
       time.sleep(.1)
       lcd.lcd_display_string("Moving to Station 2",2) 
       self.position = 2
-      jsn.writeJSON(self.sonictime,self.position)
+      jsn.writeJSON(self.sonictime, self.position)
       step.step(140,0)
       lcd.lcd_clear()
       time.sleep(.1)
@@ -559,6 +559,13 @@ class AcidDipTester():
           lcd.lcd_display_string("    Sonicator On",3) 
           lcd.lcd_display_string("Time Remaining:   "+str(x).zfill(2),4) 
           if self.door == 1:
+              lcd.lcd_clear()
+              time.sleep(.1)
+              lcd.lcd_display_string("     Door Ajar",2)
+              lcd.lcd_display_string("    Aborting...",3)
+              self.pwrsplyOff()
+              self.linactOff()
+              self.sonic2Off()
               self.doorAjar()
               self.pwrsplyOn()
               self.linactOn()
@@ -577,7 +584,7 @@ class AcidDipTester():
       time.sleep(.1)
       lcd.lcd_display_string("   Returning Home",2) 
       self.position = 3
-      jsn.writeJSON(self.sonictime,self.position)
+      jsn.writeJSON(self.sonictime, self.position)
       step.step(128,0)
       self.homing()
       print("Complete!")
