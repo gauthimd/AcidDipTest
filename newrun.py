@@ -356,7 +356,7 @@ class AcidDipTester():
       self.sonicmenu =0
       self.menu()
 
-  def movetoStation(self): #CHECK ROTATION 0 v 1 -- CW = ?  CCW = ?
+  def movetoStation(self): 
       x = 1
       z = 1
       if self.position == 1:
