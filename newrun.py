@@ -19,8 +19,8 @@ class AcidDipTester():
   def __init__(self):
       self.linactpin1 = 18        #Relay pins
       self.linactpin2 = 16
-      self.sonicpin1 = 25
-      self.sonicpin2 = 8
+      self.sonicpin1 = 8
+      self.sonicpin2 = 25
       self.pwrsplypin = 12
       self.fanpin = 7
       self.relayspare1 = 10
@@ -41,7 +41,7 @@ class AcidDipTester():
       self.sonicmenu = 0
       self.sonictime = 30
       self.menuline = 1
-      self.position = None
+      self.position = 3 
       self.auto = 0
       self.rotaryswitch = KY040.KY040(21,20,24,self.rotaryCallback,self.switchCallback) 
       GPIO.setwarnings(False)   #GPIO setup
@@ -60,7 +60,7 @@ class AcidDipTester():
       GPIO.add_event_detect(22, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
       GPIO.add_event_detect(4, GPIO.FALLING, callback=self.doorcallback, bouncetime=300)
       self.rotaryswitch.start()
-      self.fanOn()
+#      self.fanOn()
   
   #Callback functions are called when input is received.
   def rotaryCallback(self, rot):
@@ -84,7 +84,7 @@ class AcidDipTester():
           else:
               self.sonictime -=1
               if self.sonictime <= 0: self.sonictime = 0
-      print(self.menuline, self.sonictime)
+      print("Rotary rotated")
 
   def switchCallback(self):
       self.switch = 1
@@ -212,18 +212,23 @@ class AcidDipTester():
           lcd.lcd_display_string("       Homing",1)
           lcd.lcd_display_string("   Please wait...",3)
           step.step(1,0)
-          time.sleep(.33)
+          time.sleep(.1)
           if self.door == 1: 
               self.lightOff()
               self.doorAjar()
               self.lightOn()
+      step.step(2,1)
       self.lightOff()
       self.limit = 0
       self.position = 3
+      lcd.lcd_clear()
+      lcd.lcd_display_string("       Homing",1)
+      lcd.lcd_display_string("     Complete!",3)
   
   def ready(self):
       self.button = 0
       self.switch = 0
+      self.door = 0
       lcd.lcd_clear()
       time.sleep(.1)
       lcd.lcd_display_string("        Ready",1)
@@ -283,6 +288,7 @@ class AcidDipTester():
       self.button = 0
       self.switch = 0
       self.mainmenu = 1
+      self.menudict = {}
       if self.position == 1:
           self.menudict = {1:"Set Sonication Time",2:" Move to Station 2",3:"Return to Home Pos.",4:"  Extend Actuator",
                   5:"Turn On Power Supply",6:" Turn On Sonicator 1",7:" Turn On Sonicator 2"}
@@ -374,10 +380,10 @@ class AcidDipTester():
       lcd.lcd_clear()
       lcd.lcd_display_string("Moving to Station "+x,2) 
       lcd.lcd_display_string("   Please Wait...",3) 
-      if z == 1: step.step(143,0) #Figure this mess out here!!!!!!!!!!!!!!!
-      if z == 2: step.step(143,1)
-      if z == 3: step.step(286,1)
-      if z == 4: step.step(143,1)
+      if z == 1: step.step(140,0) 
+      if z == 2: step.step(140,1)
+      if z == 3: step.step(271,1)
+      if z == 4: step.step(131,1)
       self.position = int(x)
       print("Position " + str(self.position))
       lcd.lcd_clear()
@@ -387,24 +393,41 @@ class AcidDipTester():
       self.lightOff()
       self.menu()
 
+  def reset(self):
+      self.door = 0
+      self.button = 0
+      self.switch = 0
+      print("Reset")
+
   def manualEnable(self):
       x = 0
       self.door = 0
-      if self.menuline == 4: self.linactOn()
-      elif self.menuline == 5: self.pwrsplyOn()
-      elif self.menuline == 6: self.sonic1On()
-      elif self.menuline == 7: self.sonic2On()
       self.lightOn()
+      if self.menuline == 4: 
+          self.linactOn()
+          time.sleep(.25)
+          self.reset()
+      elif self.menuline == 5: 
+          self.pwrsplyOn()
+          time.sleep(.25)
+          self.reset()
+      elif self.menuline == 6: 
+          self.sonic1On()
+          time.sleep(.25)
+          self.reset()
+      elif self.menuline == 7: 
+          self.sonic2On()
+          time.sleep(.25)
+          self.reset()
       lcd.lcd_clear()
+      if self.menuline == 4:  lcd.lcd_display_string(" Actuator Extended",1)
+      elif self.menuline ==5: lcd.lcd_display_string("  Power Supply On",1) 
+      elif self.menuline ==6: lcd.lcd_display_string("  Sonicator 1 On",1) 
+      elif self.menuline ==7: lcd.lcd_display_string("  Sonicator 2 On",1) 
+      lcd.lcd_display_string("     Press Knob",3) 
+      if self.menuline == 4:  lcd.lcd_display_string("     to Retract",4) 
+      else:                   lcd.lcd_display_string("    to Turn Off",4) 
       while self.switch == 0:
-          if self.menuline == 4:  lcd.lcd_display_string(" Actuator Extended",1)
-          elif self.menuline ==5: lcd.lcd_display_string("  Power Supply On",1) 
-          elif self.menuline ==6: lcd.lcd_display_string("  Sonicator 1 On",1) 
-          elif self.menuline ==7: lcd.lcd_display_string("  Sonicator 2 On",1) 
-          lcd.lcd_display_string("     Press Knob",3) 
-          if self.menuline == 4:  lcd.lcd_display_string("     to Retract",4) 
-          else:                   lcd.lcd_display_string("    to Turn Off",4) 
-          '''
           if self.door == 1:
               time.sleep(.5)
               if GPIO.input(self.doorpin1) == True and GPIO.input(self.doorpin2) == True:
@@ -413,7 +436,6 @@ class AcidDipTester():
                   x = 1
                   break
           time.sleep(.5)
-          '''
       if self.menuline == 4: self.linactOff()
       elif self.menuline == 5: self.pwrsplyOff()
       elif self.menuline == 6: self.sonic1Off()
@@ -425,7 +447,7 @@ class AcidDipTester():
           if self.menuline ==4 :  lcd.lcd_display_string("   Retracting...",3) 
           else:                   lcd.lcd_display_string("   Turning Off...",3) 
           time.sleep(2)
-      self.switch = 0
+      self.reset()
       self.menu()
 
   def autoRun(self):
@@ -436,7 +458,7 @@ class AcidDipTester():
       time.sleep(1)
       lcd.lcd_clear()
       lcd.lcd_display_string("Moving to Station 1",2) 
-      step.step(274,1)
+      step.step(271,1)
       lcd.lcd_clear()
       lcd.lcd_display_string("  Power Supply On",2) 
       self.pwrsplyOn()
@@ -463,7 +485,7 @@ class AcidDipTester():
       time.sleep(1)
       lcd.lcd_clear()
       lcd.lcd_display_string("Moving to Station 2",2) 
-      step.step(143,0)
+      step.step(140,0)
       lcd.lcd_clear()
       lcd.lcd_display_string(" Actuator Extending",2) 
       self.linactOn()
@@ -482,14 +504,8 @@ class AcidDipTester():
       time.sleep(1)
       lcd.lcd_clear()
       lcd.lcd_display_string("   Returning Home",2) 
-      step.step(131,0)
-      '''
-      x = 0
-      while x < 16:
-          x +=1
-          if self.door == 1: self.doorAjar()
-          time.sleep(.33)
-      '''
+      step.step(128,0)
+      self.homing()
       print("Complete!")
       lcd.lcd_clear()
       lcd.lcd_display_string("     Complete!",3) 
