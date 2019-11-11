@@ -11,13 +11,13 @@ class JSON():
 
     def writeJSON(self, sontime, position):
         update = {"sonictime": sontime,"position": position}
-        with open('sonictime.json','w') as outfile:
+        with open('/home/pi/AcidDipTest/sonictime.json','w') as outfile:
             json.dump(update, outfile)
         outfile.close()
     
     def readJSON(self):
         sonictime = 0
-        with open('sonictime.json') as infile:
+        with open('/home/pi/AcidDipTest/sonictime.json') as infile:
             data = json.load(infile)
         infile.close()
         self.sonictime = data["sonictime"]

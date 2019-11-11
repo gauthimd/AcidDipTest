@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- encoding: utf-8 -*-
-
+print("ADT started")
 #Import all necessary objects. The lcddriver is for the lcd display
 #The RpiMotorLib is for the stepper motor, and the KY040 is for the rotary encoder
 import time, lcddriver, KY040, threading
@@ -19,6 +19,7 @@ jsn = JSON()
 class AcidDipTester():
   
   def __init__(self):
+      print("__init__ started")
       self.linactpin1 = 18        #Relay pins
       self.linactpin2 = 16
       self.sonicpin1 = 8
