@@ -479,6 +479,13 @@ class AcidDipTester():
           else:                   lcd.lcd_display_string("   Turning Off...",3) 
           time.sleep(3)
       self.menu()
+  
+  def abort(self):
+      for x in self.relaypins:
+          GPIO.output(x, GPIO.HIGH)
+      print("Abort")
+      time.sleep(1)
+      self.reset()
 
   def autoRun(self):
       self.auto = 1
@@ -518,9 +525,7 @@ class AcidDipTester():
               time.sleep(.1)
               lcd.lcd_display_string("     Door Ajar",2)
               lcd.lcd_display_string("    Aborting...",3)
-              self.pwrsplyOff()
-              self.linactOff()
-              self.sonic1Off()
+              self.abort()
               self.doorAjar()
               self.pwrsplyOn()
               self.linactOn()
@@ -564,9 +569,7 @@ class AcidDipTester():
               time.sleep(.1)
               lcd.lcd_display_string("     Door Ajar",2)
               lcd.lcd_display_string("    Aborting...",3)
-              self.pwrsplyOff()
-              self.linactOff()
-              self.sonic2Off()
+              self.abort()
               self.doorAjar()
               self.pwrsplyOn()
               self.linactOn()
@@ -593,6 +596,7 @@ class AcidDipTester():
       time.sleep(.1)
       lcd.lcd_display_string("     Complete!",3) 
       time.sleep(2)
+      self.lightOff()
       self.button = 0 
       self.auto = 0
       self.ready()
