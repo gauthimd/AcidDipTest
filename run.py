@@ -571,7 +571,6 @@ class AcidDipTester():
               lcd.lcd_display_string("    Aborting...",3)
               self.abort()
               self.doorAjar()
-              self.pwrsplyOn()
               self.linactOn()
               self.sonic2On()
           x -= 1
