@@ -145,7 +145,7 @@ class AcidDipTester():
 
   def pwrsplyOn(self):
       GPIO.output(self.pwrsplypin, GPIO.LOW)
-      time.sleep(3)
+      time.sleep(4)
       power.connect()
       power.turnOn()
       time.sleep(.5)

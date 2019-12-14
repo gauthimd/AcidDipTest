@@ -35,7 +35,7 @@ class Stepper():
 
 if __name__=="__main__":
     step = Stepper()
-    step.step(51,1,1)
+    step.step(2,1,1)
     GPIO.cleanup()
 #140 steps 0 dir Station 1 to Station 2
 #140 steps 1 dir Station 2 to Station 1

@@ -8,10 +8,10 @@ import RPi.GPIO as GPIO
 class powerSupply():
 
     def __init__(self, volt=24, amp=4):
-        self.volts = bytes(str(volt),'utf-8')
-        self.ovp = bytes(str(int(self.volts) + 1),'utf-8')
-        self.amps = bytes(str(amp),'utf-8')
-        self.ocp = bytes(str(int(self.amps) + .25),'utf-8')
+        self.volts = bytes(str(volt))
+        self.ovp = bytes(str(int(self.volts) + 1))
+        self.amps = bytes(str(amp))
+        self.ocp = bytes(str(int(self.amps) + .25))
         time.sleep(1)
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
@@ -22,10 +22,12 @@ class powerSupply():
 
     def relayOn(self):
         GPIO.output(self.pwrsplypin, GPIO.LOW)
+        print("Relay On")
         time.sleep(4)
 
     def relayOff(self):
         GPIO.output(self.pwrsplypin, GPIO.HIGH)
+        print("Relay Off")
         time.sleep(2)
 
     def connect(self):
@@ -100,17 +102,18 @@ class powerSupply():
         time.sleep(1)
 
 if __name__=="__main__":
-    power = powerSupply(15,3)
+    power = powerSupply(12,3)
     power.relayOn()
     power.connect()
     power.lockKeys()
     power.setVoltsAmps()
     power.setProtection()
-    power.turnOn()
+    #power.turnOn()
     #if power.selfCheck()==1: print("It's fucked")
     #else: print("It's good")
     time.sleep(5)
     power.turnOff()
     power.unlockKeys()
     power.close()
+    power.relayOff()
     print("Done")
